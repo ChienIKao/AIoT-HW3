@@ -62,7 +62,6 @@
 ## Roadmap
 - Implement optional/bonus features:
   - Batch inference for uploaded email files with CSV export of predictions.
-  - Surface top tokens/word cloud directly inside Streamlit.
-  - Visualize model confidence distribution in the demo.
+  - Embed additional dataset visuals (e.g., word cloud inside the demo).
 - Add automated test coverage for preprocessing and service layers.
 - Consider packaging the CLI as a console script for easier distribution.

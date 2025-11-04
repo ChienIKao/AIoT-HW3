@@ -13,6 +13,7 @@ from .training import (
     DEFAULT_ARTIFACTS_DIR,
     METRICS_FILENAME,
     MODEL_FILENAME,
+    VALIDATION_PREDICTIONS_FILENAME,
     VECTORIZER_FILENAME,
 )
 
@@ -107,9 +108,33 @@ def load_metrics(
         return None
 
 
+def load_validation_predictions(
+    artifacts_dir: str | Path | None = None,
+) -> Dict[str, List[float | str]] | None:
+    """Load stored validation labels and probabilities."""
+    base_dir = Path(artifacts_dir) if artifacts_dir is not None else DEFAULT_ARTIFACTS_DIR
+    predictions_path = base_dir / VALIDATION_PREDICTIONS_FILENAME
+    if not predictions_path.exists():
+        return None
+    try:
+        payload = json.loads(predictions_path.read_text())
+        labels = payload.get("labels")
+        probabilities = payload.get("probabilities")
+        threshold = payload.get("threshold", 0.5)
+        if not isinstance(labels, list) or not isinstance(probabilities, list):
+            return None
+        return {
+            "labels": labels,
+            "probabilities": probabilities,
+            "threshold": float(threshold),
+        }
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return None
+
+
 def reset_cache() -> None:
     """Clear cached artifacts, primarily for testing."""
     _load_cached.cache_clear()
 
 
-__all__ = ["load_artifacts", "predict_messages", "load_metrics", "reset_cache"]
+__all__ = ["load_artifacts", "predict_messages", "load_metrics", "load_validation_predictions", "reset_cache"]

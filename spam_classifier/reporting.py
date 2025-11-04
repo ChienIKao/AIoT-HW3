@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Tuple
+from typing import Iterable, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,4 +71,36 @@ def save_roc_curve(
     return output_path
 
 
-__all__ = ["save_confusion_matrix", "save_roc_curve"]
+def save_pr_curve(
+    precision: Sequence[float],
+    recall: Sequence[float],
+    thresholds: Sequence[float],
+    output_path: Path,
+) -> Path:
+    """Save a precision-recall curve plot."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    thresholds = list(thresholds)
+
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.plot(recall, precision, color="green", lw=2, label="Precision-Recall curve")
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    ax.set_title("Precision-Recall Curve")
+    ax.legend(loc="lower left")
+
+    if thresholds:
+        for r, p, thresh in zip(recall[1:], precision[1:], thresholds):
+            if abs(thresh - 0.5) < 1e-6:
+                ax.scatter(r, p, color="red", label="Threshold 0.5")
+                break
+
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+    return output_path
+
+
+__all__ = ["save_confusion_matrix", "save_roc_curve", "save_pr_curve"]

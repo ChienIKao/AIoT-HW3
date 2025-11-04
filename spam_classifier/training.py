@@ -13,14 +13,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
+    precision_recall_curve,
     precision_recall_fscore_support,
     roc_auc_score,
     roc_curve,
 )
 from sklearn.model_selection import train_test_split
 
-from .data import DEFAULT_DATA_PATH, encode_labels, prepare_dataset
-from .reporting import save_confusion_matrix, save_roc_curve
+from .data import DEFAULT_DATA_PATH, decode_labels, encode_labels, prepare_dataset
+from .reporting import save_confusion_matrix, save_pr_curve, save_roc_curve
 
 DEFAULT_ARTIFACTS_DIR = Path("artifacts")
 MODEL_FILENAME = "model.pkl"
@@ -28,6 +29,8 @@ VECTORIZER_FILENAME = "vectorizer.pkl"
 METRICS_FILENAME = "metrics.json"
 CONFUSION_MATRIX_FILENAME = "confusion_matrix.png"
 ROC_CURVE_FILENAME = "roc_curve.png"
+PR_CURVE_FILENAME = "pr_curve.png"
+VALIDATION_PREDICTIONS_FILENAME = "validation_predictions.json"
 F1_THRESHOLD = 0.95
 RANDOM_STATE = 42
 
@@ -99,7 +102,20 @@ def train_pipeline(
             f"F1-score {metrics['f1']:.3f} is below required threshold {F1_THRESHOLD}."
         )
 
-    artifacts_path = save_artifacts(vectorizer, model, metrics, y_val, y_pred, y_prob, artifacts_dir)
+    precision_curve, recall_curve, thresholds = precision_recall_curve(y_val, y_prob)
+
+    artifacts_path = save_artifacts(
+        vectorizer,
+        model,
+        metrics,
+        y_val,
+        y_pred,
+        y_prob,
+        precision_curve,
+        recall_curve,
+        thresholds,
+        artifacts_dir,
+    )
     return TrainingResult(
         vectorizer=vectorizer,
         model=model,
@@ -115,6 +131,9 @@ def save_artifacts(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     y_prob: np.ndarray,
+    precision_curve: np.ndarray,
+    recall_curve: np.ndarray,
+    thresholds: np.ndarray,
     artifacts_dir: str | Path = DEFAULT_ARTIFACTS_DIR,
 ) -> Path:
     """Persist artifacts to disk."""
@@ -132,6 +151,15 @@ def save_artifacts(
 
     fpr, tpr, _ = roc_curve(y_true, y_prob)
     save_roc_curve(fpr, tpr, target / ROC_CURVE_FILENAME)
+
+    save_pr_curve(precision_curve, recall_curve, thresholds, target / PR_CURVE_FILENAME)
+
+    validation_payload = {
+        "labels": decode_labels(y_true),
+        "probabilities": y_prob.tolist(),
+        "threshold": 0.5,
+    }
+    (target / VALIDATION_PREDICTIONS_FILENAME).write_text(json.dumps(validation_payload, indent=2))
     return target
 
 
@@ -144,4 +172,6 @@ __all__ = [
     "METRICS_FILENAME",
     "CONFUSION_MATRIX_FILENAME",
     "ROC_CURVE_FILENAME",
+    "PR_CURVE_FILENAME",
+    "VALIDATION_PREDICTIONS_FILENAME",
 ]

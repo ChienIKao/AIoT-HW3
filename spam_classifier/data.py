@@ -25,18 +25,33 @@ def load_raw_dataset(path: str | Path = DEFAULT_DATA_PATH) -> pd.DataFrame:
     if not source.exists():
         raise FileNotFoundError(f"Dataset not found at {source}")
     df = pd.read_csv(source, names=["label", "text"], encoding="utf-8")
-    df["label"] = df["label"].str.strip().str.lower()
-    df["text"] = df["text"].astype(str)
-    return df
+    return prepare_dataframe(df)
+
+
+def prepare_dataframe(
+    df: pd.DataFrame,
+    label_column: str = "label",
+    text_column: str = "text",
+) -> pd.DataFrame:
+    """Clean a dataframe and return standardized columns."""
+    if label_column not in df.columns or text_column not in df.columns:
+        raise KeyError("Specified label/text columns not found in dataframe")
+
+    data = df[[label_column, text_column]].copy()
+    data = data.rename(columns={label_column: "label", text_column: "text"})
+    data["label"] = data["label"].astype(str).str.strip().str.lower()
+    data["text"] = data["text"].astype(str)
+    data = data.dropna(subset=["label", "text"])
+    data = data.drop_duplicates(subset=["text"])
+    data["clean_text"] = data["text"].map(clean_text)
+    data = data[data["clean_text"].str.len() > 0]
+    return data.reset_index(drop=True)
 
 
 def prepare_dataset(path: str | Path = DEFAULT_DATA_PATH) -> pd.DataFrame:
-    """Load and clean the dataset, returning de-duplicated records."""
-    df = load_raw_dataset(path)
-    df = df.drop_duplicates(subset=["text"])
-    df["clean_text"] = df["text"].map(clean_text)
-    df = df[df["clean_text"].str.len() > 0]
-    return df.reset_index(drop=True)
+    """Load and clean the default dataset, returning de-duplicated records."""
+    df = pd.read_csv(path, names=["label", "text"], encoding="utf-8")
+    return prepare_dataframe(df)
 
 
 def encode_labels(labels: Iterable[str]) -> list[int]:

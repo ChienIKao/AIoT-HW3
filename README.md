@@ -15,14 +15,18 @@ Run the training command to produce model artifacts, metrics, and diagnostic plo
 ```bash
 python cli.py train --data datasets/sms_spam_no_header.csv --artifacts-dir artifacts
 ```
-This command prints accuracy, precision, recall, F1, and ROC AUC, and persists `vectorizer.pkl`, `model.pkl`, `metrics.json`, `confusion_matrix.png`, and `roc_curve.png` inside the specified artifacts directory.
+This command prints accuracy, precision, recall, F1, and ROC AUC, and persists the following artifacts in the specified directory:
+- `vectorizer.pkl` / `model.pkl`
+- `metrics.json`
+- `confusion_matrix.png`, `roc_curve.png`, `pr_curve.png`
+- `validation_predictions.json`
 
 ## Evaluating the Model
 Score a labeled dataset using the saved artifacts:
 ```bash
 python cli.py eval --data datasets/sms_spam_no_header.csv --artifacts-dir artifacts
 ```
-The evaluation exports `eval_metrics.json`, `eval_confusion_matrix.png`, and `eval_roc_curve.png` alongside the printed metrics.
+The evaluation exports `eval_metrics.json`, `eval_confusion_matrix.png`, `eval_roc_curve.png`, and `eval_pr_curve.png` alongside the printed metrics.
 
 ## Predicting from the CLI
 Classify a single message via:
@@ -36,7 +40,12 @@ Launch the interactive demo after training:
 ```bash
 streamlit run streamlit_app.py
 ```
-The app loads persisted artifacts, lets you paste email text, visualizes the predicted label and probability, and shows the latest validation metrics in the sidebar.
+Key features of the dashboard:
+- Dataset picker with configurable label/text columns (and header toggle).
+- Sidebar threshold slider that recalculates precision, recall, and F1 using stored validation predictions.
+- Live inference section with spam/ham quick-test buttons, probability bar, and threshold marker.
+- Dataset insights highlighting class distribution and top tokens per class.
+- Model diagnostics displaying confusion matrix, ROC curve, and PR curve images.
 
 ## Exploratory Visualizations
 Export token frequency plots and a word cloud for quick dataset intuition:
@@ -55,14 +64,13 @@ This command produces `artifacts/top_tokens.png` (bar chart of the top tokens) a
 
 ## Known Limitations & Backlog
 - Batch upload / CSV export flows are not yet implemented (planned as a future OpenSpec change).
-- Streamlit demo currently links to generated plots via CLI; embedding token charts or confidence histograms remains TODO.
 - No automated tests yet; run manual CLI commands to verify behaviour.
 - Deployment scripts for Streamlit Cloud should include training or artifact upload before launch.
 
 ## OpenSpec
-Active change: `add-spam-classifier`
-- Specs live under `openspec/changes/add-spam-classifier/specs/`
-- Validate with `openspec validate add-spam-classifier --strict`
+Active changes: `add-spam-classifier`, `add-streamlit-enhancements`
+- Specs live under `openspec/changes/<change-id>/specs/`
+- Validate with `openspec validate <change-id> --strict`
 
 ## Testing Notes
 The dataset is imbalanced; the training pipeline uses stratified splitting, enforces a macro F1 >= 0.95, and reports ROC AUC to ensure baseline quality.

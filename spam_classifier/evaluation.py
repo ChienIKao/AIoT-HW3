@@ -9,19 +9,21 @@ import numpy as np
 from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
+    precision_recall_curve,
     precision_recall_fscore_support,
     roc_auc_score,
     roc_curve,
 )
 
 from .data import encode_labels, prepare_dataset
-from .reporting import save_confusion_matrix, save_roc_curve
+from .reporting import save_confusion_matrix, save_pr_curve, save_roc_curve
 from .service import load_artifacts
 from .training import DEFAULT_ARTIFACTS_DIR
 
 EVAL_METRICS_FILENAME = "eval_metrics.json"
 EVAL_CONFUSION_FILENAME = "eval_confusion_matrix.png"
 EVAL_ROC_FILENAME = "eval_roc_curve.png"
+EVAL_PR_FILENAME = "eval_pr_curve.png"
 
 
 def evaluate_model(
@@ -67,6 +69,9 @@ def evaluate_model(
     fpr, tpr, _ = roc_curve(y_true, y_prob)
     save_roc_curve(fpr, tpr, artifacts_path / EVAL_ROC_FILENAME)
 
+    precision_curve, recall_curve, thresholds = precision_recall_curve(y_true, y_prob)
+    save_pr_curve(precision_curve, recall_curve, thresholds, artifacts_path / EVAL_PR_FILENAME)
+
     return metrics
 
 
@@ -75,4 +80,5 @@ __all__ = [
     "EVAL_METRICS_FILENAME",
     "EVAL_CONFUSION_FILENAME",
     "EVAL_ROC_FILENAME",
+    "EVAL_PR_FILENAME",
 ]
