@@ -40,6 +40,7 @@ Launch the interactive demo after training:
 ```bash
 streamlit run streamlit_app.py
 ```
+Hosted preview: https://aiot-hw3-svn2sr8b6tendhzjc4waak.streamlit.app/
 Key features of the dashboard:
 - Dataset picker with configurable label/text columns (and header toggle).
 - Sidebar threshold slider that recalculates precision, recall, and F1 using stored validation predictions.
