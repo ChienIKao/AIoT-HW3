@@ -198,7 +198,7 @@ plot_paths = [
 for col, (plot_path, title) in zip(plot_cols, plot_paths):
     if plot_path.exists():
         col.subheader(title)
-        col.image(str(plot_path), use_container_width=True)
+        col.image(str(plot_path), width="stretch")
     else:
         col.warning(f"Missing {title.lower()}, retrain to regenerate.")
 
